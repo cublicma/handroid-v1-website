@@ -27,11 +27,6 @@ const scrubTime = (video, progress) => {
   const mode = video.dataset.scrubMode;
   let target = progress * video.duration;
 
-  if (mode === "full") {
-    const slowed = Math.pow(progress, 1.75);
-    target = slowed * video.duration;
-  }
-
   if (mode === "explode" && video.duration > 50) {
     const hold = 47.5;
     if (progress < 0.52) {
@@ -65,29 +60,20 @@ const advanceScrubVideos = () => {
     const mode = video.dataset.scrubMode;
     const diff = rawTarget - video.currentTime;
     const absDiff = Math.abs(diff);
-    const closeEnough = mode === "explode" ? 0.13 : 0.09;
+    const closeEnough = mode === "explode" ? 0.08 : 0.05;
 
     if (absDiff < closeEnough) {
       video.pause();
+      video.currentTime = rawTarget;
       return;
     }
 
-    if (diff < 0) {
-      const reverseStep = mode === "explode" ? 0.34 : 0.28;
-      video.pause();
-      video.currentTime = Math.max(rawTarget, video.currentTime + diff * reverseStep);
-      needsMoreFrames = true;
-      return;
-    }
+    const follow = mode === "explode" ? 0.48 : 0.58;
+    const maxStep = mode === "explode" ? 1.15 : 0.82;
+    const step = clamp(diff * follow, -maxStep, maxStep);
 
-    const playbackRate = mode === "explode"
-      ? clamp(diff * 0.32, 0.75, 3.2)
-      : clamp(diff * 0.58, 0.85, 2.8);
-
-    video.playbackRate = playbackRate;
-    video.play().catch(() => {
-      video.currentTime = video.currentTime + diff * 0.18;
-    });
+    video.pause();
+    video.currentTime = clamp(video.currentTime + step, 0, Math.max(0, video.duration - 0.04));
     needsMoreFrames = true;
   });
 
@@ -166,27 +152,57 @@ document.querySelectorAll("[data-scrub-video]").forEach((video) => {
   video.addEventListener("canplay", requestUpdate, { once: true });
 });
 
-const carousel = document.querySelector(".carousel-track");
-if (carousel) {
-  carousel.innerHTML += carousel.innerHTML;
-}
+const carouselViewport = document.querySelector("[data-carousel]");
+const carousel = document.querySelector("[data-carousel-track]");
+const carouselRange = document.querySelector("[data-carousel-range]");
 
-const autoplayVideos = [...document.querySelectorAll("video:not([data-scrub-video])")];
-autoplayVideos.forEach((video) => {
+let videoObserver;
+
+const prepareAutoplayVideo = (video) => {
+  if (video.dataset.prepared === "true") return;
+
   video.muted = true;
   video.loop = true;
   video.playsInline = true;
-});
+  video.preload = "none";
+
+  video.querySelectorAll("source").forEach((source) => {
+    source.dataset.src = source.getAttribute("src") || source.dataset.src;
+    source.removeAttribute("src");
+  });
+  video.dataset.prepared = "true";
+  video.load();
+};
+
+const loadVideo = (video) => {
+  if (video.dataset.loaded === "true") return;
+
+  video.querySelectorAll("source").forEach((source) => {
+    source.setAttribute("src", source.dataset.src);
+  });
+  video.dataset.loaded = "true";
+  video.load();
+};
 
 const playVisibleVideo = (video) => {
+  loadVideo(video);
   const playPromise = video.play();
   if (playPromise) {
     playPromise.catch(() => {});
   }
 };
 
+const observeAutoplayVideo = (video) => {
+  prepareAutoplayVideo(video);
+  if (videoObserver) {
+    videoObserver.observe(video);
+  } else {
+    playVisibleVideo(video);
+  }
+};
+
 if ("IntersectionObserver" in window) {
-  const videoObserver = new IntersectionObserver((entries) => {
+  videoObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       const video = entry.target;
       if (entry.isIntersecting) {
@@ -195,11 +211,81 @@ if ("IntersectionObserver" in window) {
         video.pause();
       }
     });
-  }, { threshold: 0.18, rootMargin: "160px 0px" });
+  }, { threshold: 0.18, rootMargin: "420px 0px" });
+}
 
-  autoplayVideos.forEach((video) => videoObserver.observe(video));
-} else {
-  autoplayVideos.forEach(playVisibleVideo);
+document.querySelectorAll("video:not([data-scrub-video])").forEach(observeAutoplayVideo);
+
+if (carousel && carouselViewport && carouselRange) {
+  let carouselLastFrame = performance.now();
+  let carouselHover = false;
+  let carouselDragging = false;
+  let carouselStartX = 0;
+  let carouselStartScroll = 0;
+  const carouselSpeed = 48;
+
+  const carouselMaxScroll = () => Math.max(1, carouselViewport.scrollWidth - carouselViewport.clientWidth);
+
+  const updateCarouselRange = () => {
+    carouselRange.value = String((carouselViewport.scrollLeft / carouselMaxScroll()) * 100);
+  };
+
+  const animateCarousel = (time) => {
+    const deltaSeconds = Math.min(0.05, (time - carouselLastFrame) / 1000);
+    carouselLastFrame = time;
+
+    if (!carouselHover && !carouselDragging) {
+      const maxScroll = carouselMaxScroll();
+      const nextScroll = carouselViewport.scrollLeft + deltaSeconds * carouselSpeed;
+      carouselViewport.scrollLeft = nextScroll >= maxScroll ? 0 : nextScroll;
+      updateCarouselRange();
+    }
+
+    window.requestAnimationFrame(animateCarousel);
+  };
+
+  carouselViewport.addEventListener("pointerenter", () => {
+    carouselHover = true;
+  });
+
+  carouselViewport.addEventListener("pointerleave", () => {
+    carouselHover = false;
+  });
+
+  carouselViewport.addEventListener("pointerdown", (event) => {
+    carouselDragging = true;
+    carouselStartX = event.clientX;
+    carouselStartScroll = carouselViewport.scrollLeft;
+    carouselViewport.classList.add("is-dragging");
+    carouselViewport.setPointerCapture(event.pointerId);
+  });
+
+  carouselViewport.addEventListener("pointermove", (event) => {
+    if (!carouselDragging) return;
+    carouselViewport.scrollLeft = carouselStartScroll - (event.clientX - carouselStartX);
+    updateCarouselRange();
+  });
+
+  const stopCarouselDrag = (event) => {
+    if (!carouselDragging) return;
+    carouselDragging = false;
+    carouselViewport.classList.remove("is-dragging");
+    if (carouselViewport.hasPointerCapture(event.pointerId)) {
+      carouselViewport.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  carouselViewport.addEventListener("pointerup", stopCarouselDrag);
+  carouselViewport.addEventListener("pointercancel", stopCarouselDrag);
+
+  carouselRange.addEventListener("input", () => {
+    carouselViewport.scrollLeft = (Number(carouselRange.value) / 100) * carouselMaxScroll();
+  });
+
+  carouselViewport.addEventListener("scroll", updateCarouselRange, { passive: true });
+  window.addEventListener("resize", updateCarouselRange);
+  updateCarouselRange();
+  window.requestAnimationFrame(animateCarousel);
 }
 
 window.addEventListener("scroll", requestUpdate, { passive: true });

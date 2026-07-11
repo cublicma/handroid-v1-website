@@ -538,15 +538,6 @@ h1 {
   line-height: 1.05;
 }
 
-.design-title span {
-  display: inline-block;
-  margin-top: 16px;
-  color: #65707d;
-  font-size: clamp(0.95rem, 1.35vw, 1.25rem);
-  font-weight: 780;
-  letter-spacing: 0.04em;
-}
-
 .demo-title h2 {
   max-width: 720px;
   margin: 0;
@@ -659,9 +650,25 @@ h1 {
 .demo-carousel {
   position: relative;
   z-index: 10;
-  overflow: hidden;
   padding: clamp(56px, 8vw, 104px) 0 clamp(76px, 9vw, 132px);
   background: var(--paper);
+}
+
+.carousel-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  scrollbar-width: none;
+}
+
+.carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-viewport.is-dragging {
+  cursor: grabbing;
 }
 
 .carousel-track {
@@ -669,20 +676,6 @@ h1 {
   width: max-content;
   gap: 18px;
   padding: 0 20px;
-  animation: demoMarquee 72s linear infinite;
-}
-
-.carousel-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes demoMarquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-50% - 9px));
-  }
 }
 
 .portrait-demo {
@@ -732,6 +725,17 @@ h1 {
   transform: translateY(0);
 }
 
+.carousel-control {
+  width: min(520px, calc(100% - 72px));
+  margin: 28px auto 0;
+}
+
+.carousel-control input {
+  width: 100%;
+  accent-color: #2aa8bb;
+  cursor: pointer;
+}
+
 .abstract,
 .bibtex {
   position: relative;
@@ -772,7 +776,7 @@ h1 {
 }
 
 .bibtex .section-heading h2 {
-  margin-bottom: 0;
+  margin-bottom: 18px;
   font-size: clamp(2rem, 4vw, 3.8rem);
   line-height: 1;
 }
@@ -801,25 +805,34 @@ h1 {
   }
 
   .morph-viewport {
-    position: relative;
-    top: auto;
-    height: 68vh;
+    position: sticky;
+    top: 70px;
+    z-index: 3;
+    height: min(64vh, 560px);
     min-height: 430px;
   }
 
   .morph-copy {
-    gap: 20px;
-    padding: 0 0 24px;
+    gap: 16vh;
+    padding: 12vh 0 24px;
   }
 
   .morph-card {
-    min-height: 0;
+    min-height: 58vh;
   }
 }
 
 @media (max-width: 720px) {
   .site-header {
     position: absolute;
+  }
+
+  .hero.scrub-section {
+    min-height: 390vh;
+  }
+
+  .design.scrub-section {
+    min-height: 500vh;
   }
 
   nav {
@@ -867,5 +880,37 @@ h1 {
 
   .portrait-demo {
     flex-basis: 220px;
+  }
+
+  .morph-stage {
+    width: min(100% - 28px, 1460px);
+    padding-top: 42px;
+  }
+
+  .morph-viewport {
+    top: 18px;
+    height: 58vh;
+    min-height: 360px;
+  }
+
+  .model-shell {
+    border-radius: 8px;
+  }
+
+  .morph-copy {
+    gap: 18vh;
+    padding-top: 18vh;
+  }
+
+  .morph-card {
+    min-height: 68vh;
+  }
+
+  .scene-media.clean video {
+    transform: scale(0.76);
+  }
+
+  .carousel-control {
+    width: min(420px, calc(100% - 64px));
   }
 }

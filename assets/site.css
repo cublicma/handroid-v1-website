@@ -1037,11 +1037,6 @@ h1 {
     min-height: 260vh;
   }
 
-  .hero .scene-media video {
-    transform: scale(0.86);
-    transform-origin: center;
-  }
-
   .design {
     min-height: 112vh;
   }
@@ -1180,7 +1175,11 @@ h1 {
   .abstract p {
     font-size: 0.98rem;
     line-height: 1.58;
-    text-align: left;
+    text-align: justify;
+    text-align-last: left;
+    text-justify: inter-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
   }
 
   .detail-copy {

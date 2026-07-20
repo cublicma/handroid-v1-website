@@ -682,7 +682,7 @@ h1 {
   background: rgba(12, 16, 22, 0.72);
 }
 
-.demo-focus > div:not(.demo-media) {
+.demo-focus > .demo-caption {
   padding: 24px 4px 0;
 }
 
@@ -706,7 +706,12 @@ h1 {
   gap: clamp(16px, 2.4vw, 30px);
 }
 
+.humanoid-video-pair .demo-media {
+  min-width: 0;
+}
+
 .humanoid-video-pair video {
+  display: block;
   aspect-ratio: 16 / 9;
   object-fit: cover;
 }

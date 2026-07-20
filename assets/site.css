@@ -1149,32 +1149,43 @@ h1 {
 
   h1 {
     font-size: clamp(3.55rem, 17vw, 5.2rem);
+    text-align: center;
   }
 
   .subtitle {
     font-size: clamp(1.75rem, 8vw, 3rem);
     line-height: 1.03;
+    text-align: center;
     white-space: normal;
   }
 
   .authors {
     display: grid;
+    width: 100%;
     gap: 2px;
-    margin-right: 0;
-    margin-left: 0;
+    justify-items: center;
+    margin-right: auto;
+    margin-left: auto;
     font-size: 0.62rem;
     line-height: 1.35;
+    text-align: center;
     white-space: normal;
   }
 
   .author-row {
     display: flex;
     flex-wrap: nowrap;
+    justify-content: center;
     gap: 0.28em;
   }
 
   .author-entry {
     flex: 0 0 auto;
+  }
+
+  .affiliations {
+    width: 100%;
+    text-align: center;
   }
 
   .hero-actions {
@@ -1311,8 +1322,13 @@ h1 {
 
   .carousel-viewport {
     touch-action: pan-x pan-y;
-    overscroll-behavior-x: contain;
+    overscroll-behavior-x: none;
+    overscroll-behavior-inline: none;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .carousel-track {
+    padding-right: 0;
   }
 
   .carousel-control {

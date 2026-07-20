@@ -368,6 +368,9 @@ if (carousel && carouselViewport && carouselRange) {
   let carouselScrollLimit = 1;
   let carouselStartX = 0;
   let carouselStartScroll = 0;
+  let carouselTouchStartX = 0;
+  let carouselTouchStartY = 0;
+  let carouselTouchLastX = 0;
   const carouselSpeed = 48;
   const carouselFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const carouselAutoEnabled = () => carouselFinePointer.matches && window.innerWidth > 720;
@@ -390,9 +393,17 @@ if (carousel && carouselViewport && carouselRange) {
 
   const carouselMaxScroll = () => carouselScrollLimit;
 
+  const clampCarouselScroll = () => {
+    const clampedScroll = Math.min(carouselMaxScroll(), Math.max(0, carouselViewport.scrollLeft));
+    if (Math.abs(carouselViewport.scrollLeft - clampedScroll) > 0.5) {
+      carouselViewport.scrollLeft = clampedScroll;
+    }
+    return clampedScroll;
+  };
+
   const updateCarouselRange = () => {
     carouselRangeFrame = 0;
-    const nextValue = String(Math.round(Math.min(carouselMaxScroll(), Math.max(0, carouselViewport.scrollLeft))));
+    const nextValue = String(Math.round(clampCarouselScroll()));
     if (carouselRange.value !== nextValue) {
       carouselRange.value = nextValue;
     }
@@ -489,6 +500,30 @@ if (carousel && carouselViewport && carouselRange) {
 
   carouselViewport.addEventListener("pointerup", stopCarouselDrag);
   carouselViewport.addEventListener("pointercancel", stopCarouselDrag);
+
+  carouselViewport.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) return;
+    carouselTouchStartX = event.touches[0].clientX;
+    carouselTouchStartY = event.touches[0].clientY;
+    carouselTouchLastX = carouselTouchStartX;
+  }, { passive: true });
+
+  carouselViewport.addEventListener("touchmove", (event) => {
+    if (event.touches.length !== 1) return;
+    const currentX = event.touches[0].clientX;
+    const horizontalDistance = currentX - carouselTouchStartX;
+    const verticalDistance = event.touches[0].clientY - carouselTouchStartY;
+    const horizontalStep = currentX - carouselTouchLastX;
+    carouselTouchLastX = currentX;
+    if (Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+
+    const atStart = carouselViewport.scrollLeft <= 0.5;
+    const atEnd = carouselViewport.scrollLeft >= carouselMaxScroll() - 0.5;
+    if ((atStart && horizontalStep > 0) || (atEnd && horizontalStep < 0)) {
+      event.preventDefault();
+      clampCarouselScroll();
+    }
+  }, { passive: false });
 
   carouselRange.addEventListener("pointerdown", () => {
     carouselRangeActive = true;

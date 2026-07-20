@@ -1327,10 +1327,6 @@ h1 {
     -webkit-overflow-scrolling: touch;
   }
 
-  .carousel-track {
-    padding-right: 0;
-  }
-
   .carousel-control {
     width: min(420px, calc(100% - 64px));
   }

@@ -1192,6 +1192,12 @@ h1 {
     white-space: nowrap;
   }
 
+  .carousel-viewport {
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .carousel-control {
     width: min(420px, calc(100% - 64px));
   }

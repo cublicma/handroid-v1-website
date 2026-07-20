@@ -332,39 +332,100 @@ if (carousel && carouselViewport && carouselRange) {
   let carouselHover = false;
   let carouselDragging = false;
   let carouselDidDrag = false;
+  let carouselRangeActive = false;
+  let carouselRangeFrame = 0;
+  let carouselAnimationFrame = 0;
+  let carouselDirection = 1;
+  let carouselScrollLimit = 1;
   let carouselStartX = 0;
   let carouselStartScroll = 0;
   const carouselSpeed = 48;
+  const carouselFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const carouselAutoEnabled = () => carouselFinePointer.matches && window.innerWidth > 720;
 
-  const carouselMaxScroll = () => Math.max(1, carouselViewport.scrollWidth - carouselViewport.clientWidth);
+  const measureCarouselMaxScroll = () => {
+    const nativeMax = Math.max(0, carouselViewport.scrollWidth - carouselViewport.clientWidth);
+    const lastCard = carousel.lastElementChild;
+    if (!lastCard) {
+      carouselScrollLimit = Math.max(1, nativeMax);
+      return;
+    }
+
+    const trackRect = carousel.getBoundingClientRect();
+    const lastCardRect = lastCard.getBoundingClientRect();
+    const endPadding = Number.parseFloat(getComputedStyle(carousel).paddingRight) || 0;
+    const contentMax = lastCardRect.right - trackRect.left + endPadding - carouselViewport.clientWidth;
+    carouselScrollLimit = Math.max(1, Math.min(nativeMax, Math.ceil(contentMax)));
+  };
+
+  const carouselMaxScroll = () => carouselScrollLimit;
 
   const updateCarouselRange = () => {
-    carouselRange.value = String((carouselViewport.scrollLeft / carouselMaxScroll()) * 100);
+    carouselRangeFrame = 0;
+    const progress = clamp(carouselViewport.scrollLeft / carouselMaxScroll());
+    const nextValue = String(Math.round(progress * 100));
+    if (carouselRange.value !== nextValue) {
+      carouselRange.value = nextValue;
+    }
+  };
+
+  const scheduleCarouselRangeUpdate = () => {
+    if (carouselRangeFrame) return;
+    carouselRangeFrame = window.requestAnimationFrame(updateCarouselRange);
   };
 
   const animateCarousel = (time) => {
+    carouselAnimationFrame = 0;
+    if (!carouselAutoEnabled()) return;
+
     const deltaSeconds = Math.min(0.05, (time - carouselLastFrame) / 1000);
     carouselLastFrame = time;
 
-    if (!carouselHover && !carouselDragging) {
+    if (!carouselHover && !carouselDragging && !carouselRangeActive) {
       const maxScroll = carouselMaxScroll();
-      const nextScroll = carouselViewport.scrollLeft + deltaSeconds * carouselSpeed;
-      carouselViewport.scrollLeft = nextScroll >= maxScroll ? 0 : nextScroll;
-      updateCarouselRange();
+      const nextScroll = carouselViewport.scrollLeft + deltaSeconds * carouselSpeed * carouselDirection;
+      if (nextScroll >= maxScroll) {
+        carouselViewport.scrollLeft = maxScroll;
+        carouselDirection = -1;
+      } else if (nextScroll <= 0) {
+        carouselViewport.scrollLeft = 0;
+        carouselDirection = 1;
+      } else {
+        carouselViewport.scrollLeft = nextScroll;
+      }
+      scheduleCarouselRangeUpdate();
     }
 
-    window.requestAnimationFrame(animateCarousel);
+    carouselAnimationFrame = window.requestAnimationFrame(animateCarousel);
   };
 
-  carouselViewport.addEventListener("pointerenter", () => {
+  const updateCarouselAutoMode = () => {
+    if (!carouselAutoEnabled()) {
+      if (carouselAnimationFrame) {
+        window.cancelAnimationFrame(carouselAnimationFrame);
+        carouselAnimationFrame = 0;
+      }
+      return;
+    }
+
+    if (!carouselAnimationFrame) {
+      carouselLastFrame = performance.now();
+      carouselAnimationFrame = window.requestAnimationFrame(animateCarousel);
+    }
+  };
+
+  carouselViewport.addEventListener("pointerenter", (event) => {
+    if (event.pointerType !== "mouse") return;
     carouselHover = true;
   });
 
-  carouselViewport.addEventListener("pointerleave", () => {
+  carouselViewport.addEventListener("pointerleave", (event) => {
+    if (event.pointerType !== "mouse") return;
     carouselHover = false;
   });
 
   carouselViewport.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "mouse") return;
     carouselDragging = true;
     carouselDidDrag = false;
     carouselStartX = event.clientX;
@@ -374,11 +435,11 @@ if (carousel && carouselViewport && carouselRange) {
   });
 
   carouselViewport.addEventListener("pointermove", (event) => {
-    if (!carouselDragging) return;
+    if (!carouselDragging || event.pointerType !== "mouse") return;
     const distance = event.clientX - carouselStartX;
     carouselDidDrag ||= Math.abs(distance) > 6;
     carouselViewport.scrollLeft = carouselStartScroll - distance;
-    updateCarouselRange();
+    scheduleCarouselRangeUpdate();
   });
 
   const stopCarouselDrag = (event) => {
@@ -394,19 +455,45 @@ if (carousel && carouselViewport && carouselRange) {
     if (carouselViewport.hasPointerCapture(event.pointerId)) {
       carouselViewport.releasePointerCapture(event.pointerId);
     }
+    carouselLastFrame = performance.now();
   };
 
   carouselViewport.addEventListener("pointerup", stopCarouselDrag);
   carouselViewport.addEventListener("pointercancel", stopCarouselDrag);
 
-  carouselRange.addEventListener("input", () => {
-    carouselViewport.scrollLeft = (Number(carouselRange.value) / 100) * carouselMaxScroll();
+  carouselRange.addEventListener("pointerdown", () => {
+    carouselRangeActive = true;
   });
 
-  carouselViewport.addEventListener("scroll", updateCarouselRange, { passive: true });
-  window.addEventListener("resize", updateCarouselRange);
+  const stopCarouselRangeInteraction = () => {
+    carouselRangeActive = false;
+    carouselLastFrame = performance.now();
+  };
+
+  carouselRange.addEventListener("pointerup", stopCarouselRangeInteraction);
+  carouselRange.addEventListener("pointercancel", stopCarouselRangeInteraction);
+  carouselRange.addEventListener("change", stopCarouselRangeInteraction);
+  carouselRange.addEventListener("blur", stopCarouselRangeInteraction);
+
+  carouselRange.addEventListener("input", () => {
+    carouselViewport.scrollLeft = (Number(carouselRange.value) / 100) * carouselMaxScroll();
+    scheduleCarouselRangeUpdate();
+  });
+
+  carouselViewport.addEventListener("scroll", scheduleCarouselRangeUpdate, { passive: true });
+  window.addEventListener("resize", () => {
+    measureCarouselMaxScroll();
+    scheduleCarouselRangeUpdate();
+    updateCarouselAutoMode();
+  });
+  if (typeof carouselFinePointer.addEventListener === "function") {
+    carouselFinePointer.addEventListener("change", updateCarouselAutoMode);
+  } else {
+    carouselFinePointer.addListener(updateCarouselAutoMode);
+  }
+  measureCarouselMaxScroll();
   updateCarouselRange();
-  window.requestAnimationFrame(animateCarousel);
+  updateCarouselAutoMode();
 }
 
 window.addEventListener("scroll", requestUpdate, { passive: true });

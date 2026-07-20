@@ -692,6 +692,10 @@ h1 {
   line-height: 1;
 }
 
+.mobile-demo-title {
+  display: none;
+}
+
 .dp-focus {
   padding-top: clamp(58px, 7vw, 104px);
 }
@@ -1033,6 +1037,11 @@ h1 {
     min-height: 260vh;
   }
 
+  .hero .scene-media video {
+    transform: scale(0.86);
+    transform-origin: center;
+  }
+
   .design {
     min-height: 112vh;
   }
@@ -1083,6 +1092,38 @@ h1 {
     width: min(100% - 28px, 1260px);
   }
 
+  .design-title p {
+    margin-top: 18px;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .demos-heading .demo-title p {
+    margin-top: 16px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .demo-focus > .demo-caption {
+    padding-top: 18px;
+  }
+
+  .demo-focus h2 {
+    font-size: 1.18rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .desktop-demo-title {
+    display: none;
+  }
+
+  .mobile-demo-title {
+    display: inline;
+  }
+
   .portrait-demo {
     flex-basis: 220px;
   }
@@ -1119,6 +1160,39 @@ h1 {
     transform: scale(0.76);
   }
 
+  .abstract {
+    padding: 56px 0;
+    text-align: left;
+  }
+
+  .abstract h2,
+  .abstract p {
+    width: calc(100% - 40px);
+  }
+
+  .abstract h2 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+    line-height: 1.05;
+    text-align: left;
+  }
+
+  .abstract p {
+    font-size: 0.98rem;
+    line-height: 1.58;
+    text-align: left;
+  }
+
+  .detail-copy {
+    padding: 24px 24px 12px;
+  }
+
+  .detail-copy h2 {
+    font-size: 1.3rem;
+    line-height: 1.08;
+    white-space: nowrap;
+  }
+
   .carousel-control {
     width: min(420px, calc(100% - 64px));
   }
@@ -1147,5 +1221,23 @@ h1 {
   .copy-button {
     top: 14px;
     right: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .design-title p {
+    font-size: 0.72rem;
+  }
+
+  .demos-heading .demo-title p {
+    font-size: 0.65rem;
+  }
+
+  .demo-focus h2 {
+    font-size: 1.05rem;
+  }
+
+  .detail-copy h2 {
+    font-size: 1.12rem;
   }
 }

@@ -1019,6 +1019,12 @@ h1 {
   background: #2a2e35;
 }
 
+@media (min-width: 721px) {
+  .hero .scene-media video {
+    transform: scale(1.27);
+  }
+}
+
 @media (max-width: 1040px) {
   .subtitle,
   .authors {

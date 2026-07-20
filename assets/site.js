@@ -1,6 +1,8 @@
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const root = document.documentElement;
 const header = document.querySelector("[data-header]");
+const mobileNavToggle = document.querySelector("[data-mobile-nav-toggle]");
+const mobileNavPanel = document.querySelector("[data-mobile-nav-panel]");
 const hero = document.querySelector("[data-hero]");
 const morph = document.querySelector("[data-morphology]");
 const progressBar = document.querySelector("[data-progress-bar]");
@@ -67,6 +69,33 @@ const requestUpdate = () => {
   ticking = true;
   window.requestAnimationFrame(update);
 };
+
+const setMobileNavigationOpen = (open) => {
+  if (!mobileNavToggle || !mobileNavPanel) return;
+  mobileNavToggle.setAttribute("aria-expanded", String(open));
+  mobileNavToggle.setAttribute("aria-label", open ? "Close section navigation" : "Open section navigation");
+  mobileNavPanel.hidden = !open;
+};
+
+mobileNavToggle?.addEventListener("click", () => {
+  setMobileNavigationOpen(mobileNavToggle.getAttribute("aria-expanded") !== "true");
+});
+
+mobileNavPanel?.querySelectorAll("a").forEach((link) => {
+  link.addEventListener("click", () => setMobileNavigationOpen(false));
+});
+
+document.addEventListener("click", (event) => {
+  if (!header || !mobileNavPanel || mobileNavPanel.hidden || header.contains(event.target)) return;
+  setMobileNavigationOpen(false);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && mobileNavPanel && !mobileNavPanel.hidden) {
+    setMobileNavigationOpen(false);
+    mobileNavToggle?.focus();
+  }
+});
 
 const carouselViewport = document.querySelector("[data-carousel]");
 const carousel = document.querySelector("[data-carousel-track]");
@@ -348,22 +377,22 @@ if (carousel && carouselViewport && carouselRange) {
     const lastCard = carousel.lastElementChild;
     if (!lastCard) {
       carouselScrollLimit = Math.max(1, nativeMax);
-      return;
+    } else {
+      const trackRect = carousel.getBoundingClientRect();
+      const lastCardRect = lastCard.getBoundingClientRect();
+      const endPadding = Number.parseFloat(getComputedStyle(carousel).paddingRight) || 0;
+      const contentMax = lastCardRect.right - trackRect.left + endPadding - carouselViewport.clientWidth;
+      carouselScrollLimit = Math.max(1, Math.min(nativeMax, Math.ceil(contentMax)));
     }
 
-    const trackRect = carousel.getBoundingClientRect();
-    const lastCardRect = lastCard.getBoundingClientRect();
-    const endPadding = Number.parseFloat(getComputedStyle(carousel).paddingRight) || 0;
-    const contentMax = lastCardRect.right - trackRect.left + endPadding - carouselViewport.clientWidth;
-    carouselScrollLimit = Math.max(1, Math.min(nativeMax, Math.ceil(contentMax)));
+    carouselRange.max = String(carouselScrollLimit);
   };
 
   const carouselMaxScroll = () => carouselScrollLimit;
 
   const updateCarouselRange = () => {
     carouselRangeFrame = 0;
-    const progress = clamp(carouselViewport.scrollLeft / carouselMaxScroll());
-    const nextValue = String(Math.round(progress * 100));
+    const nextValue = String(Math.round(Math.min(carouselMaxScroll(), Math.max(0, carouselViewport.scrollLeft))));
     if (carouselRange.value !== nextValue) {
       carouselRange.value = nextValue;
     }
@@ -476,16 +505,27 @@ if (carousel && carouselViewport && carouselRange) {
   carouselRange.addEventListener("blur", stopCarouselRangeInteraction);
 
   carouselRange.addEventListener("input", () => {
-    carouselViewport.scrollLeft = (Number(carouselRange.value) / 100) * carouselMaxScroll();
+    carouselViewport.scrollLeft = Math.min(carouselMaxScroll(), Math.max(0, Number(carouselRange.value)));
     scheduleCarouselRangeUpdate();
   });
 
   carouselViewport.addEventListener("scroll", scheduleCarouselRangeUpdate, { passive: true });
-  window.addEventListener("resize", () => {
+  const syncCarouselMetrics = () => {
     measureCarouselMaxScroll();
     scheduleCarouselRangeUpdate();
+  };
+
+  window.addEventListener("resize", () => {
+    syncCarouselMetrics();
     updateCarouselAutoMode();
   });
+  window.addEventListener("load", syncCarouselMetrics);
+  document.fonts?.ready.then(syncCarouselMetrics);
+  if ("ResizeObserver" in window) {
+    const carouselResizeObserver = new ResizeObserver(syncCarouselMetrics);
+    carouselResizeObserver.observe(carouselViewport);
+    carouselResizeObserver.observe(carousel);
+  }
   if (typeof carouselFinePointer.addEventListener === "function") {
     carouselFinePointer.addEventListener("change", updateCarouselAutoMode);
   } else {
@@ -497,6 +537,11 @@ if (carousel && carouselViewport && carouselRange) {
 }
 
 window.addEventListener("scroll", requestUpdate, { passive: true });
-window.addEventListener("resize", requestUpdate);
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 720) {
+    setMobileNavigationOpen(false);
+  }
+  requestUpdate();
+});
 window.addEventListener("load", update);
 update();

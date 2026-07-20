@@ -8,9 +8,9 @@
     <meta property="og:description" content="A transformable desktop robot bridging dexterous hand and humanoid embodiments.">
     <meta property="og:image" content="assets/images/hero-switching-poster.jpg">
     <title>Handroid: Bridging Dexterous Hand and Humanoid</title>
-    <link rel="stylesheet" href="assets/site.css?v=20260720f">
+    <link rel="stylesheet" href="assets/site.css?v=20260721a">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <script defer src="assets/site.js?v=20260720f"></script>
+    <script defer src="assets/site.js?v=20260721a"></script>
   </head>
   <body>
     <header class="site-header" data-header>
@@ -18,7 +18,30 @@
         <span class="brand-mark"></span>
         <span>Handroid</span>
       </a>
-      <nav aria-label="Primary navigation">
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#morphology">Morphology</a>
+        <a href="#design">Design</a>
+        <a href="#demos">Demos</a>
+        <a href="#abstract">Abstract</a>
+      </nav>
+      <button
+        class="mobile-nav-toggle"
+        type="button"
+        aria-label="Open section navigation"
+        aria-controls="mobile-navigation"
+        aria-expanded="false"
+        title="Sections"
+        data-mobile-nav-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav
+        id="mobile-navigation"
+        class="mobile-nav-panel"
+        aria-label="Mobile section navigation"
+        data-mobile-nav-panel
+        hidden>
         <a href="#morphology">Morphology</a>
         <a href="#design">Design</a>
         <a href="#demos">Demos</a>
@@ -39,15 +62,19 @@
             <h1>Handroid</h1>
             <p class="subtitle"><span>Bridging</span> Dexterous Hand and Humanoid</p>
             <p class="authors" aria-label="Authors">
-              <a href="https://scholar.google.com/citations?user=UMzzfYwAAAAJ&amp;hl=zh-CN&amp;oi=sra" target="_blank" rel="noopener noreferrer">Ruogu Li</a><sup>1</sup>,
-              <a href="https://www.chenyangma.com/" target="_blank" rel="noopener noreferrer">Chenyang Ma</a><sup>1</sup>,
-              <a href="https://skevinci.github.io/" target="_blank" rel="noopener noreferrer">Sikai Li</a><sup>1</sup>,
-              <a href="https://zhenyuwei2003.github.io/" target="_blank" rel="noopener noreferrer">Zhenyu Wei</a><sup>1</sup>,
-              <a href="https://scholar.google.com/citations?user=v5mEvqAAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Yunchao Yao</a><sup>1</sup>,
-              <a href="https://hshi74.github.io/" target="_blank" rel="noopener noreferrer">Haochen Shi</a><sup>2</sup>,
-              <a href="https://scholar.google.com/citations?user=i28fU0MAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">C. Karen Liu</a><sup>2</sup>,
-              <a href="https://shurans.github.io/" target="_blank" rel="noopener noreferrer">Shuran Song</a><sup>2</sup>,
-              <a href="https://dingmyu.github.io/" target="_blank" rel="noopener noreferrer">Mingyu Ding</a><sup>1</sup>
+              <span class="author-row">
+                <span class="author-entry"><a href="https://scholar.google.com/citations?user=UMzzfYwAAAAJ&amp;hl=zh-CN&amp;oi=sra" target="_blank" rel="noopener noreferrer">Ruogu Li</a><sup>1</sup>,</span>
+                <span class="author-entry"><a href="https://www.chenyangma.com/" target="_blank" rel="noopener noreferrer">Chenyang Ma</a><sup>1</sup>,</span>
+                <span class="author-entry"><a href="https://skevinci.github.io/" target="_blank" rel="noopener noreferrer">Sikai Li</a><sup>1</sup>,</span>
+                <span class="author-entry"><a href="https://zhenyuwei2003.github.io/" target="_blank" rel="noopener noreferrer">Zhenyu Wei</a><sup>1</sup>,</span>
+                <span class="author-entry"><a href="https://scholar.google.com/citations?user=v5mEvqAAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Yunchao Yao</a><sup>1</sup>,</span>
+              </span>
+              <span class="author-row">
+                <span class="author-entry"><a href="https://hshi74.github.io/" target="_blank" rel="noopener noreferrer">Haochen Shi</a><sup>2</sup>,</span>
+                <span class="author-entry"><a href="https://scholar.google.com/citations?user=i28fU0MAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">C. Karen Liu</a><sup>2</sup>,</span>
+                <span class="author-entry"><a href="https://shurans.github.io/" target="_blank" rel="noopener noreferrer">Shuran Song</a><sup>2</sup>,</span>
+                <span class="author-entry"><a href="https://dingmyu.github.io/" target="_blank" rel="noopener noreferrer">Mingyu Ding</a><sup>1</sup></span>
+              </span>
             </p>
             <p class="affiliations"><sup>1</sup>UNC Chapel Hill <span></span> <sup>2</sup>Stanford University</p>
             <div class="hero-actions" aria-label="Project links">
@@ -301,7 +328,7 @@
           </div>
         </div>
         <div class="carousel-control">
-          <input type="range" min="0" max="100" value="0" aria-label="Demo carousel position" data-carousel-range>
+          <input type="range" min="0" max="1" step="1" value="0" aria-label="Demo carousel position" data-carousel-range>
         </div>
       </section>
 

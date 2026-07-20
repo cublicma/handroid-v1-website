@@ -71,10 +71,19 @@ const requestUpdate = () => {
 const carouselViewport = document.querySelector("[data-carousel]");
 const carousel = document.querySelector("[data-carousel-track]");
 const carouselRange = document.querySelector("[data-carousel-range]");
-const replayButton = document.querySelector("[data-replay-button]");
-const replayVideo = document.querySelector("[data-replay-video]");
+const lightbox = document.querySelector("[data-video-lightbox]");
+const lightboxDialog = document.querySelector("[data-video-lightbox-dialog]");
+const lightboxVideo = document.querySelector("[data-lightbox-video]");
+const lightboxCloseButton = lightbox?.querySelector(".video-lightbox-close");
+const copyButton = document.querySelector("[data-copy-bibtex]");
+const copyLabel = copyButton?.querySelector("[data-copy-label]");
+const bibtexCode = document.querySelector(".bibtex code");
 
 let videoObserver;
+let activeLightboxSource;
+let activeLightboxWasPlaying = false;
+let pendingLightboxTime = 0;
+let copyResetTimer;
 
 const prepareAutoplayVideo = (video) => {
   if (video.dataset.prepared === "true") return;
@@ -134,16 +143,187 @@ if ("IntersectionObserver" in window) {
   }, { threshold: 0.18, rootMargin: "420px 0px" });
 }
 
-document.querySelectorAll("video").forEach(observeAutoplayVideo);
+document.querySelectorAll("video:not([data-lightbox-video])").forEach(observeAutoplayVideo);
 
-replayButton?.addEventListener("click", () => {
-  if (!replayVideo) return;
+document.querySelectorAll("[data-replay-button]").forEach((button) => {
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const scope = button.closest("[data-replay-scope]");
+    if (!scope) return;
 
-  loadVideo(replayVideo);
-  replayVideo.currentTime = 0;
-  const playPromise = replayVideo.play();
+    scope.querySelectorAll("video").forEach((video) => {
+      loadVideo(video);
+      video.currentTime = 0;
+      playVisibleVideo(video);
+    });
+  });
+});
+
+const lightboxSourceUrl = (video) => (
+  video.currentSrc
+  || video.querySelector("source")?.getAttribute("src")
+  || video.querySelector("source")?.dataset.src
+);
+
+const videoTitle = (video) => {
+  const section = video.closest(".demo-focus, .portrait-demo");
+  const heading = section?.querySelector("h2, h3");
+  const videos = Array.from(section?.querySelectorAll("video") || []);
+  const index = videos.indexOf(video);
+  const suffix = videos.length > 1 ? ` ${index + 1}` : "";
+  return `${heading?.textContent.trim() || "Demo"}${suffix}`;
+};
+
+const updateLightboxAspect = (width = 16, height = 9) => {
+  if (!lightboxDialog || !width || !height) return;
+  const aspect = width / height;
+  lightboxDialog.style.setProperty("--lightbox-aspect", aspect.toFixed(5));
+  lightboxDialog.style.setProperty("--lightbox-width-limit", `${(86 * aspect).toFixed(3)}vh`);
+  lightboxDialog.style.setProperty("--lightbox-mobile-width-limit", `${(82 * aspect).toFixed(3)}dvh`);
+};
+
+const openLightbox = (video) => {
+  if (!lightbox || !lightboxVideo || !lightboxDialog) return;
+
+  loadVideo(video);
+  const sourceUrl = lightboxSourceUrl(video);
+  if (!sourceUrl) return;
+
+  activeLightboxSource = video;
+  activeLightboxWasPlaying = !video.paused;
+  pendingLightboxTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+  video.pause();
+
+  const title = video.dataset.videoTitle || videoTitle(video);
+  lightboxDialog.setAttribute("aria-label", `${title} enlarged video player`);
+  updateLightboxAspect(video.videoWidth || 16, video.videoHeight || 9);
+  lightboxVideo.poster = video.poster;
+  lightboxVideo.muted = video.muted;
+  lightboxVideo.loop = true;
+  lightboxVideo.defaultPlaybackRate = Number(video.dataset.playbackRate || video.playbackRate || 1);
+  lightboxVideo.playbackRate = lightboxVideo.defaultPlaybackRate;
+  lightboxVideo.src = sourceUrl;
+  lightbox.hidden = false;
+  document.body.classList.add("video-lightbox-open");
+  lightboxVideo.load();
+  const playPromise = lightboxVideo.play();
   if (playPromise) {
     playPromise.catch(() => {});
+  }
+  lightboxCloseButton?.focus({ preventScroll: true });
+};
+
+const closeLightbox = () => {
+  if (!lightbox || !lightboxVideo || lightbox.hidden) return;
+
+  const sourceVideo = activeLightboxSource;
+  const resumeTime = lightboxVideo.currentTime;
+  lightboxVideo.pause();
+  lightbox.hidden = true;
+  document.body.classList.remove("video-lightbox-open");
+  lightboxVideo.removeAttribute("src");
+  lightboxVideo.removeAttribute("poster");
+  lightboxVideo.load();
+
+  if (sourceVideo) {
+    if (Number.isFinite(resumeTime) && sourceVideo.readyState > 0) {
+      sourceVideo.currentTime = resumeTime;
+    }
+
+    const rect = sourceVideo.getBoundingClientRect();
+    if (activeLightboxWasPlaying && rect.bottom > 0 && rect.top < window.innerHeight) {
+      playVisibleVideo(sourceVideo);
+    }
+    sourceVideo.focus({ preventScroll: true });
+  }
+
+  activeLightboxSource = undefined;
+  activeLightboxWasPlaying = false;
+};
+
+lightboxVideo?.addEventListener("loadedmetadata", () => {
+  updateLightboxAspect(lightboxVideo.videoWidth, lightboxVideo.videoHeight);
+  if (!Number.isFinite(lightboxVideo.duration)) return;
+  lightboxVideo.currentTime = Math.min(pendingLightboxTime, Math.max(0, lightboxVideo.duration - 0.05));
+});
+
+document.querySelectorAll(".demo-focus video, .demo-carousel video").forEach((video) => {
+  const title = videoTitle(video);
+  video.dataset.videoExpand = "true";
+  video.dataset.videoTitle = title;
+  video.tabIndex = 0;
+  video.setAttribute("role", "button");
+  video.setAttribute("aria-label", `Enlarge ${title} video`);
+
+  video.addEventListener("click", () => {
+    if (carouselViewport?.dataset.suppressClick === "true") return;
+    openLightbox(video);
+  });
+
+  video.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openLightbox(video);
+  });
+});
+
+lightbox?.querySelectorAll("[data-video-lightbox-close]").forEach((control) => {
+  control.addEventListener("click", closeLightbox);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && lightbox && !lightbox.hidden) {
+    closeLightbox();
+  }
+});
+
+const fallbackCopy = (text) => {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) {
+    throw new Error("Copy command failed");
+  }
+};
+
+const showCopyResult = (copied) => {
+  if (!copyButton || !copyLabel) return;
+  if (copied) {
+    copyButton.dataset.state = "copied";
+    copyLabel.textContent = "Copied";
+  } else {
+    copyLabel.textContent = "Copy failed";
+  }
+
+  window.clearTimeout(copyResetTimer);
+  copyResetTimer = window.setTimeout(() => {
+    delete copyButton.dataset.state;
+    copyLabel.textContent = "Copy";
+  }, 1800);
+};
+
+copyButton?.addEventListener("click", () => {
+  if (!bibtexCode || !copyLabel) return;
+
+  const text = bibtexCode.textContent.trim();
+  try {
+    fallbackCopy(text);
+    showCopyResult(true);
+  } catch {
+    if (!navigator.clipboard || !window.isSecureContext) {
+      showCopyResult(false);
+      return;
+    }
+
+    navigator.clipboard.writeText(text)
+      .then(() => showCopyResult(true))
+      .catch(() => showCopyResult(false));
   }
 });
 
@@ -151,6 +331,7 @@ if (carousel && carouselViewport && carouselRange) {
   let carouselLastFrame = performance.now();
   let carouselHover = false;
   let carouselDragging = false;
+  let carouselDidDrag = false;
   let carouselStartX = 0;
   let carouselStartScroll = 0;
   const carouselSpeed = 48;
@@ -185,6 +366,7 @@ if (carousel && carouselViewport && carouselRange) {
 
   carouselViewport.addEventListener("pointerdown", (event) => {
     carouselDragging = true;
+    carouselDidDrag = false;
     carouselStartX = event.clientX;
     carouselStartScroll = carouselViewport.scrollLeft;
     carouselViewport.classList.add("is-dragging");
@@ -193,7 +375,9 @@ if (carousel && carouselViewport && carouselRange) {
 
   carouselViewport.addEventListener("pointermove", (event) => {
     if (!carouselDragging) return;
-    carouselViewport.scrollLeft = carouselStartScroll - (event.clientX - carouselStartX);
+    const distance = event.clientX - carouselStartX;
+    carouselDidDrag ||= Math.abs(distance) > 6;
+    carouselViewport.scrollLeft = carouselStartScroll - distance;
     updateCarouselRange();
   });
 
@@ -201,6 +385,12 @@ if (carousel && carouselViewport && carouselRange) {
     if (!carouselDragging) return;
     carouselDragging = false;
     carouselViewport.classList.remove("is-dragging");
+    if (carouselDidDrag) {
+      carouselViewport.dataset.suppressClick = "true";
+      window.setTimeout(() => {
+        delete carouselViewport.dataset.suppressClick;
+      }, 0);
+    }
     if (carouselViewport.hasPointerCapture(event.pointerId)) {
       carouselViewport.releasePointerCapture(event.pointerId);
     }

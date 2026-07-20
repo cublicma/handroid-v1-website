@@ -29,6 +29,10 @@ body {
   line-height: 1.55;
 }
 
+body.video-lightbox-open {
+  overflow: hidden;
+}
+
 img,
 video,
 model-viewer {
@@ -637,11 +641,28 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.demo-focus video[data-video-expand],
+.portrait-demo video[data-video-expand] {
+  cursor: zoom-in;
+  transition: filter 180ms ease;
+}
+
+.demo-focus video[data-video-expand]:hover,
+.portrait-demo video[data-video-expand]:hover {
+  filter: brightness(0.94);
+}
+
+.demo-focus video[data-video-expand]:focus-visible,
+.portrait-demo video[data-video-expand]:focus-visible {
+  outline: 3px solid #2aa8bb;
+  outline-offset: 4px;
+}
+
 .replay-button {
   position: absolute;
   right: 16px;
   bottom: 16px;
-  z-index: 2;
+  z-index: 4;
   min-height: 42px;
   padding: 9px 16px;
   border: 1px solid rgba(255, 255, 255, 0.48);
@@ -751,6 +772,7 @@ h1 {
   right: 0;
   bottom: 0;
   left: 0;
+  pointer-events: none;
   margin: 0;
   padding: 14px;
   background: rgba(10, 13, 18, 0.82);
@@ -766,6 +788,73 @@ h1 {
 .portrait-demo:hover p {
   opacity: 1;
   transform: translateY(0);
+}
+
+.video-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.video-lightbox[hidden] {
+  display: none;
+}
+
+.video-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 12, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.video-lightbox-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 1440px, var(--lightbox-width-limit, 153vh));
+  max-height: 86vh;
+  aspect-ratio: var(--lightbox-aspect, 1.7778);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: #05070a;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.52);
+}
+
+.video-lightbox-dialog video {
+  width: 100%;
+  height: 100%;
+  background: #05070a;
+  object-fit: contain;
+}
+
+.video-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  border-radius: 50%;
+  background: rgba(5, 8, 12, 0.68);
+  color: white;
+  font: inherit;
+  font-size: 1.65rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.video-lightbox-close:hover,
+.video-lightbox-close:focus-visible {
+  border-color: white;
+  background: rgba(5, 8, 12, 0.88);
 }
 
 .carousel-control {
@@ -825,16 +914,80 @@ h1 {
   line-height: 1;
 }
 
+.bibtex-code {
+  position: relative;
+}
+
 .bibtex pre {
   overflow-x: auto;
   margin-bottom: 0;
-  padding: 24px;
+  padding: 68px 24px 24px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #101318;
   color: #e8edf5;
   font-size: 0.95rem;
   line-height: 1.55;
+}
+
+.copy-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 12px;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f3f6fa;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 720;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.copy-button:hover,
+.copy-button:focus-visible {
+  border-color: rgba(255, 255, 255, 0.56);
+  background: rgba(255, 255, 255, 0.17);
+}
+
+.copy-button[data-state="copied"] {
+  border-color: rgba(135, 230, 246, 0.78);
+  color: var(--cyan);
+}
+
+.copy-icon {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.copy-icon::before,
+.copy-icon::after {
+  position: absolute;
+  width: 9px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  content: "";
+}
+
+.copy-icon::before {
+  top: 0;
+  right: 0;
+}
+
+.copy-icon::after {
+  bottom: 0;
+  left: 0;
+  background: #2a2e35;
 }
 
 @media (max-width: 1040px) {
@@ -963,5 +1116,31 @@ h1 {
 
   .carousel-control {
     width: min(420px, calc(100% - 64px));
+  }
+
+  .video-lightbox {
+    padding: 12px;
+  }
+
+  .video-lightbox-dialog {
+    width: min(calc(100vw - 24px), var(--lightbox-mobile-width-limit, 146dvh));
+    max-height: 82dvh;
+  }
+
+  .video-lightbox-close {
+    top: 8px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .bibtex pre {
+    padding: 64px 18px 20px;
+    font-size: 0.82rem;
+  }
+
+  .copy-button {
+    top: 14px;
+    right: 14px;
   }
 }

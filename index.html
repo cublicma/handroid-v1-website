@@ -8,9 +8,9 @@
     <meta property="og:description" content="A transformable desktop robot bridging dexterous hand and humanoid embodiments.">
     <meta property="og:image" content="assets/images/hero-switching-poster.jpg">
     <title>Handroid: Bridging Dexterous Hand and Humanoid</title>
-    <link rel="stylesheet" href="assets/site.css?v=20260715k">
+    <link rel="stylesheet" href="assets/site.css?v=20260720b">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <script defer src="assets/site.js?v=20260715k"></script>
+    <script defer src="assets/site.js?v=20260720b"></script>
   </head>
   <body>
     <header class="site-header" data-header>
@@ -158,13 +158,13 @@
       <section id="demos" class="demos-heading">
         <div class="demo-title">
           <h2>Demos</h2>
-          <p>Manipulation, locomotion, and long-horizon behavior.</p>
+          <p>Manipulation · Locomotion · Long-horizon behavior.</p>
         </div>
       </section>
 
       <section class="demo-focus">
-        <div class="demo-media">
-          <video autoplay muted loop playsinline preload="metadata" poster="assets/images/overview-poster.jpg" data-replay-video>
+        <div class="demo-media" data-replay-scope>
+          <video autoplay muted loop playsinline preload="metadata" poster="assets/images/overview-poster.jpg">
             <source src="assets/videos/long-horizon-task.mp4?v=20260711e" type="video/mp4">
           </video>
           <button class="replay-button" type="button" data-replay-button aria-label="Replay long-horizon video">Replay</button>
@@ -176,9 +176,12 @@
       </section>
 
       <section class="demo-focus humanoid-focus">
-        <video autoplay muted loop playsinline preload="metadata" poster="assets/images/humanoid-pick-and-place-poster.jpg">
-          <source src="assets/videos/humanoid-pick-and-place.mp4?v=20260711e" type="video/mp4">
-        </video>
+        <div class="demo-media" data-replay-scope>
+          <video autoplay muted loop playsinline preload="metadata" poster="assets/images/humanoid-pick-and-place-poster.jpg">
+            <source src="assets/videos/humanoid-pick-and-place.mp4?v=20260711e" type="video/mp4">
+          </video>
+          <button class="replay-button" type="button" data-replay-button aria-label="Replay pick-and-place video">Replay</button>
+        </div>
         <div>
           <p class="eyebrow">Humanoid</p>
           <h2>Pick-and-Place</h2>
@@ -186,13 +189,14 @@
       </section>
 
       <section class="demo-focus humanoid-focus humanoid-pair-focus">
-        <div class="humanoid-video-pair">
+        <div class="demo-media humanoid-video-pair" data-replay-scope>
           <video autoplay muted loop playsinline preload="metadata" poster="assets/images/humanoid-push-up-poster.jpg">
             <source src="assets/videos/humanoid-push-up.mp4?v=20260711e" type="video/mp4">
           </video>
           <video autoplay muted loop playsinline preload="metadata" poster="assets/images/humanoid-pull-up-poster.jpg">
             <source src="assets/videos/humanoid-pull-up.mp4?v=20260711e" type="video/mp4">
           </video>
+          <button class="replay-button" type="button" data-replay-button aria-label="Replay push-up and pull-up videos">Replay</button>
         </div>
         <div>
           <p class="eyebrow">Humanoid</p>
@@ -201,9 +205,12 @@
       </section>
 
       <section class="demo-focus dp-focus">
-        <video autoplay muted loop playsinline preload="metadata" poster="assets/images/dex-hand-dp-grasping-poster.jpg" data-playback-rate="2">
-          <source src="assets/videos/dex-hand-dp-grasping.mp4?v=20260711e" type="video/mp4">
-        </video>
+        <div class="demo-media" data-replay-scope>
+          <video autoplay muted loop playsinline preload="metadata" poster="assets/images/dex-hand-dp-grasping-poster.jpg" data-playback-rate="2">
+            <source src="assets/videos/dex-hand-dp-grasping.mp4?v=20260711e" type="video/mp4">
+          </video>
+          <button class="replay-button" type="button" data-replay-button aria-label="Replay diffusion policy grasping video">Replay</button>
+        </div>
         <div>
           <p class="eyebrow">Dex-Hand</p>
           <h2>Grasping with Diffusion Policy</h2>
@@ -327,14 +334,28 @@
           <p class="eyebrow">Citation</p>
           <h2>BibTeX</h2>
         </div>
-        <pre><code>@misc{li2026handroid,
+        <div class="bibtex-code">
+          <button class="copy-button" type="button" data-copy-bibtex aria-label="Copy BibTeX citation">
+            <span class="copy-icon" aria-hidden="true"></span>
+            <span data-copy-label aria-live="polite">Copy</span>
+          </button>
+          <pre><code>@misc{li2026handroid,
   title        = {{Handroid}: Bridging Dexterous Hand and Humanoid},
   author       = {Li, Ruogu and Ma, Chenyang and Li, Sikai and Wei, Zhenyu and Yao, Yunchao and Shi, Haochen and Liu, C. Karen and Song, Shuran and Ding, Mingyu},
   year         = {2026},
   howpublished = {Project page},
   url          = {https://handroid.org}
 }</code></pre>
+        </div>
       </section>
     </main>
+
+    <div class="video-lightbox" data-video-lightbox hidden>
+      <div class="video-lightbox-backdrop" data-video-lightbox-close aria-hidden="true"></div>
+      <div class="video-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Enlarged video player" data-video-lightbox-dialog>
+        <button class="video-lightbox-close" type="button" data-video-lightbox-close aria-label="Close enlarged video">×</button>
+        <video controls playsinline preload="metadata" data-lightbox-video></video>
+      </div>
+    </div>
   </body>
 </html>
